@@ -15,5 +15,5 @@ docker network create --driver overlay backend
 docker network create --driver overlay kafka_net
 
 @REM deploy app stacks
-docker stack deploy -c docker-compose.yml --resolve-image always backend
+docker stack deploy -c docker-compose.yml --resolve-image always --with-registry-auth backend
 docker service ls

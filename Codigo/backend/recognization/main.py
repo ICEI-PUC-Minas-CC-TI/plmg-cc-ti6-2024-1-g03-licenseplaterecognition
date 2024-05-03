@@ -1,133 +1,77 @@
-import cv2 as cv
-import numpy as np
-from ultralytics import YOLO
-import easyocr
+from confluent_kafka import Consumer, Producer, KafkaException, KafkaError
+from recognization import start_recognization
 import os
-import math
-from deskew import determine_skew
-from typing import Tuple, Union
 
-def deskewcustom(im, max_skew=10):
-    height, width,zz = im.shape
-    im_gs = cv.cvtColor(im, cv.COLOR_BGR2GRAY)
-    im_gs = cv.fastNlMeansDenoising(im_gs, h=3)
-    im_bw = cv.threshold(im_gs, 0, 255, cv.THRESH_BINARY_INV | cv.THRESH_OTSU)[1]
-    lines = cv.HoughLinesP(
-        im_bw, 1, np.pi / 180, 200, minLineLength=width / 12, maxLineGap=width / 150
-    )
-    angles = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        angles.append(np.arctan2(y2 - y1, x2 - x1))
-    landscape = np.sum([abs(angle) > np.pi / 4 for angle in angles]) > len(angles) / 2
-    if landscape:
-        angles = [
-            angle
-            for angle in angles
-            if np.deg2rad(90 - max_skew) < abs(angle) < np.deg2rad(90 + max_skew)
-        ]
+# consts to topics
+TOPIC_LICENSE_PLATE = 'license-plate-topic-1'
+RESPONSE_TOPIC = 'py-response-topic-1'
+
+def delivery_callback(err, msg):
+    if err:
+        print('%% Message failed delivery: %s\n', err)
     else:
-        angles = [angle for angle in angles if abs(angle) < np.deg2rad(max_skew)]
-    if len(angles) < 5:
-        print('Insufficient data to deskew')
-        return im
-    angle_deg = np.rad2deg(np.median(angles))
-    if landscape:
-        if angle_deg < 0:
-            im = cv.rotate(im, cv.ROTATE_90_CLOCKWISE)
-            angle_deg += 90
-        elif angle_deg > 0:
-            im = cv.rotate(im, cv.ROTATE_90_COUNTERCLOCKWISE)
-            angle_deg -= 90
-    M = cv.getRotationMatrix2D((width / 2, height / 2), angle_deg, 1)
-    im = cv.warpAffine(im, M, (width, height), borderMode=cv.BORDER_REPLICATE)
-    return im
+        print('%% Message delivered to %s [%d]\n',
+                          (msg.topic(), msg.partition()))
 
-def remove_noise(image):
-    return cv.fastNlMeansDenoisingColored(image, None, 10, 10, 7, 15)
+# Create Consumer instance
+def create_consumer():
+    conf = {
+        'bootstrap.servers': 'kafka:9092',
+        'group.id': "%s-consumer" % TOPIC_LICENSE_PLATE,
+        'session.timeout.ms': 64000,
+        'default.topic.config': {'auto.offset.reset': 'earliest'},
+        'enable.auto.commit': True,
+        'auto.offset.reset': 'earliest',
+        'enable.partition.eof': True
+    }
+    return Consumer(conf) 
 
-def rotate(
-        image: np.ndarray, angle: float, background: Union[int, Tuple[int, int, int]]
-) -> np.ndarray:
-    old_width, old_height = image.shape[:2]
-    angle_radian = math.radians(angle)
-    width = abs(np.sin(angle_radian) * old_height) + abs(np.cos(angle_radian) * old_width)
-    height = abs(np.sin(angle_radian) * old_width) + abs(np.cos(angle_radian) * old_height)
+def create_producer():
+    conf = {
+        'bootstrap.servers': 'kafka:9092',
+        'client.id': 'py-producer',
+        'default.topic.config': {'acks': 'all'}
+    }
+    return Producer(conf)
 
-    image_center = tuple(np.array(image.shape[1::-1]) / 2)
-    rot_mat = cv.getRotationMatrix2D(image_center, angle, 1.0)
-    rot_mat[1, 2] += (width - old_width) / 2
-    rot_mat[0, 2] += (height - old_height) / 2
-    return cv.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
-
-
-
-model = YOLO('best.pt')
-responses = []
-
-def recognize(model, path):
-
-    prediction = model.predict(path, save=True, save_crop=True, project="run",  name="resultados", exist_ok=True)
-    
-    #check if confidence is greater than 0.6
-    print(prediction)
-
-    cropped = 'run/resultados/crops/License_Plate/' + path.split('/')[-1]
-
-    imcropped = cv.imread(cropped)
-
-    norm_img = np.zeros((imcropped.shape[0], imcropped.shape[1]))
-    img = cv.normalize(imcropped, norm_img, 0, 255, cv.NORM_MINMAX)
-    upscale = 300 / img.shape[0]
-    img = cv.resize(img, (0,0), fx=upscale, fy=upscale)
-    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    angle = determine_skew(img)
-    img = rotate(img, angle, (0, 0, 0))
-    img = cv.fastNlMeansDenoising(img, h=3)
-    img = cv.threshold(img, 64, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)[1]
-    
-    cv.imshow('threshold', img)
-    cv.waitKey(0)
-
-    kernel = np.ones((2,2),np.uint8)
-    erosion = cv.dilate(img,kernel,iterations = 2)
-    #Remover frestas e buracos em caracteres
-    kernelmorph = np.ones((1,1),np.uint8)
-    erosion = cv.morphologyEx(erosion, cv.MORPH_CLOSE, kernelmorph)
-    kernel_erosion = np.ones((2,2),np.uint8)
-    erosion = cv.erode(erosion, kernel_erosion, iterations=2)
-
-    path_test = 'run/test_ft.jpg'
-
-    cv.imwrite(path_test, erosion)
-    cv.imshow('erosion', erosion)
-    cv.waitKey(0)
-    print(erosion.shape[1]/2)
-    reader = easyocr.Reader(['en'], gpu=False)
-    result = reader.readtext(path_test, allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-', blocklist='!@#$%^&*()_+=[]{}|.:;<>?/`~',
-                             paragraph=False, min_size=erosion.shape[1]/2, rotation_info=[-30, 0, 30])
-
-    textap = ''
-    for (bbox, text, prob) in result:
-        print(f'{text} ({prob:.2f})')
-        textap += text + ' '
-    return textap
-    
-def test_images(folder_path, model, responses=[]):
-    if not os.path.isdir(folder_path):
-        print("Invalid directory path.")
-        return
-    files = os.listdir(folder_path)
-    image_files = [file for file in files if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
-    for image_file in image_files:
-        image_path = os.path.join(folder_path, image_file)
-        image_path = image_path.replace('\\', '/')
+def consume(c):
+    c.subscribe([TOPIC_LICENSE_PLATE])
+    # try to connect to kafka and if it fails, retry until it connects
+    while True:
         try:
-            responses.append(recognize(model, image_path))
-        except Exception as e:
-            print(f"Error displaying image {image_file}: {e}")
-    return responses
+            msg = c.poll(timeout=1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    continue
+                else:
+                    print(msg.error())
+                    raise KafkaException(msg.error())
+            print('%% %s [%d] at offset %d with key %s:\n' %
+                  (msg.topic(), msg.partition(), msg.offset(),
+                   str(msg.key())))
+            print(msg.value())
+            print(os.path.isfile(msg.value()))
+            print(os.path.exists(msg.value()))
+            print(os.path.abspath(msg.value()))
+            # after reading mark the message as consumed
+            c.commit(asynchronous=False)
+            # Mandar mensagem para AI
+            response = start_recognization(msg.value())
+            topic = RESPONSE_TOPIC
+            p = create_producer()
+            try:
+                data = response
+                p.produce(topic, data, callback=delivery_callback)
+            except BufferError as e:
+                print('%% Local producer queue is full (%d messages awaiting delivery): try again\n',len(p))
+            p.poll(0)
+            print('%% Waiting for %d deliveries\n' % len(p))
+            p.flush()
+        except KeyboardInterrupt:
+            break
+    c.close()
 
-print('start testing...')     
-print('responses:')    
-print(test_images('resources', model))
+consumer = create_consumer()
+consume(consumer)
