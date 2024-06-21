@@ -21,7 +21,7 @@ Docker Desktop ou CLI é necessário para execução do trabalho.
 
 para executar abra a pasta backend e execute:
 
--Windows
+- Windows
 
 ```
 .\docker-backend-swarm.bat
