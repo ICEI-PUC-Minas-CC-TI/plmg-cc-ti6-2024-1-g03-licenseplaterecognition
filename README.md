@@ -1,19 +1,33 @@
-# [Nome do projeto]
+# Implementação de um ANPR Para Fiscalização de Faixa Azul
 
-[Escreva um ou dois  parágrafo resumindo o objetivo do seu projeto.]
+A fiscalização de faixas azuis, ou estacionamentos rotativos, é um elemento crítico na gestão do trânsito de grandes cidades. Em Belo Horizonte, o sistema de rotativo foi implementado com o intuito de otimizar o uso das vagas de estacionamento nas áreas de maior fluxo de pessoas, o que promove a rotatividade de veículos e, consequentemente, facilita o acesso ao comércio local e outros serviços. Segundo dados da BHTrans, a cidade conta com aproximadamente 20 mil vagas de estacionamento rotativo distribuídas por diversas regiões. No entanto, a fiscalização ruim deste sistema, que é desafiadora de fato, impede que os benefícios de uma melhor mobilidade urbana sejam aproveitados. Diante desses desafios, a proposta deste projeto é desenvolver um sistema automatizado e eficiente para a fiscalização de faixas azuis utilizando técnicas de processamento e análise de imagens, integradas a uma infraestrutura de computação paralela e distribuída.
 
 ## Alunos integrantes da equipe
 
-* [Nome completo do aluno 1]
-* [Nome completo do aluno 2]
-* [Nome completo do aluno 3]
-* [Nome completo do aluno 4]
+* Arthur Ruiz
+* Edmar Melandes
+* Felipe Moura
+* Leon Martins
 
 ## Professores responsáveis
 
-* [Nome completo do professor 1]
-* [Nome completo do professor 2]
+* Alexei Correira Manso
+* Henrique Cota de Freitas
+* Fatima de Lima Procopio Duarte
 
 ## Instruções de utilização
 
-[Assim que a primeira versão do sistema estiver disponível, deverá complementar com as instruções de utilização. Descreva como instalar eventuais dependências e como executar a aplicação.]
+Docker Desktop ou CLI é necessário para execução do trabalho. 
+
+para executar abra a pasta backend e execute:
+
+-Windows
+
+```
+.\docker-backend-swarm.bat
+```
+
+- Linux
+```
+.\docker-backend-swarm.sh
+```
