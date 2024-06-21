@@ -1,31 +1,31 @@
 cff-version: 1.0.1
 message: Please cite this software using these metadata.
-title: 
+title: Automatic License Plate Recognition for Traffic Violation Enforcement
 authors:
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names:
-  - name-suffix: Professor
+  - family-names: Ruiz
+    given-names: Arthur
+  - family-names: Melandes
+    given-names: Edmar
+  - family-names: Moura
+    given-names: Felipe
+  - family-names: Junio
+    given-names: Leon
+  - family-names: Professor
+    given-names: Alexei
     affiliation: PUC Minas
-    family-names: 
-    given-names: 
-  - name-suffix: Professor
+  - family-names: Professor
+    given-names: Henrique
     affiliation: PUC Minas
-    family-names: 
-    given-names: 
+  - family-names: Professor
+    given-names: Fatima
+    affiliation: PUC Minas
 keywords:
-  - 
-  - 
-repository-code: 
+  - automatic license plate recognition
+  - traffic violation
+  - computer vision
+  - parallel computing
+  - thread creation
+repository-code: https://github.com/ICEI-PUC-Minas-CC-TI/plmg-cc-ti6-2024-1-g03-licenseplaterecognition
 license: CC-BY-4.0
 version: 1.0.0
-date-released: 2022-07-14
+date-released: 2024-06-21
