@@ -2,22 +2,25 @@ cff-version: 1.0.1
 message: Please cite this software using these metadata.
 title: Automatic License Plate Recognition for Traffic Violation Enforcement
 authors:
-  - family-names: Ruiz
-    given-names: Arthur
-  - family-names: Melandes
+  - family-names: Loschi Ruiz
+    given-names: Arthur Santiago
+  - family-names: de Oliveira Melandes Junior
     given-names: Edmar
-  - family-names: Moura
+  - family-names: Aguilar Santos Moura 
     given-names: Felipe
-  - family-names: Junio
+  - family-names: Junio Martins Ferreira 
     given-names: Leon
-  - family-names: Professor
-    given-names: Alexei
+  - name-suffix: Professor
+    family-names: Manso Correa Machado 
+    given-names: Alexei 
     affiliation: PUC Minas
-  - family-names: Professor
-    given-names: Henrique
-    affiliation: PUC Minas
-  - family-names: Professor
+  - name-suffix: Professor
+    family-names: de Lima Procopio Duarte 
     given-names: Fatima
+    affiliation: PUC Minas
+  - name-suffix: Professor
+    family-names: Cota de Freitas
+    given-names: Henrique 
     affiliation: PUC Minas
 keywords:
   - automatic license plate recognition
